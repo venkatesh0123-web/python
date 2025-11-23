@@ -55,16 +55,17 @@ pipeline {
             }
         }
 
-        stage('Docker Build & Push') {
-            steps {
-                script {
-                    docker.withRegistry('', REGISTRY_CREDENTIALS) {
-                        def app = docker.build("${venkatesh0123-web/python-jenkins-demo}:${v1}")
-                        app.push()
-                    }
-                }
+       stage('Docker Build & Push') {
+    steps {
+        script {
+            docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
+                def image = docker.build("venkateshvenky913/python-app:latest")
+                image.push()
             }
         }
+    }
+}
+
     }
 
     post {
