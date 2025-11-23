@@ -1,18 +1,26 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "venkatesh0123-web/python-jenkins-demo"
+        IMAGE_TAG = "latest"
+        REGISTRY_CREDENTIALS = "dockerhub-creds"
+    }
+
     stages {
-        stage('Checkout') {
+
+        stage('Checkout Code') {
             steps {
-                git 'https://github.com/venkatesh0123-web/python.git'
+                git branch: 'main', url: 'https://github.com/venkatesh0123-web/python.git'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Setup Python & Install Dependencies') {
             steps {
                 sh """
                 python3 -m venv venv
                 source venv/bin/activate
+                pip install --upgrade pip
                 pip install -r requirements.txt
                 """
             }
@@ -22,8 +30,13 @@ pipeline {
             steps {
                 sh """
                 source venv/bin/activate
-                pytest --maxfail=1 --disable-warnings -q
+                pytest --junitxml=pytest-report.xml
                 """
+            }
+            post {
+                always {
+                    junit 'pytest-report.xml'
+                }
             }
         }
 
@@ -31,9 +44,35 @@ pipeline {
             steps {
                 sh """
                 source venv/bin/activate
-                python3 app.py
+                python3 app.py > output.txt
                 """
             }
+        }
+
+        stage('Archive Build Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'output.txt', followSymlinks: false
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    docker.withRegistry('', REGISTRY_CREDENTIALS) {
+                        def app = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                        app.push()
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "🎉 Build completed successfully!"
+        }
+        failure {
+            echo "❌ Build failed. Check logs."
         }
     }
 }
