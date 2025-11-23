@@ -1,3 +1,6 @@
+import sys
+sys.path.append('.')
+
 from app import add
 
 def test_add():
