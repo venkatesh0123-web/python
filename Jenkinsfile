@@ -59,7 +59,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', REGISTRY_CREDENTIALS) {
-                        def app = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                        def app = docker.build("${venkatesh0123-web/python-jenkins-demo}:${v1}")
                         app.push()
                     }
                 }
